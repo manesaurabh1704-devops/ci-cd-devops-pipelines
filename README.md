@@ -614,7 +614,7 @@ mariadb-0                   1/1     Running   0          2d
 ![DockerHub](screenshots/03-dockerhub-images.png)
 
 ### EKS Pods Updated
-![EKS Updated](screenshots/04-eks-pods-updated.png)
+![EKS Updated](screenshots/04-EKS%20pods%20updated.png)
 
 
 
