@@ -604,6 +604,9 @@ mariadb-0                   1/1     Running   0          2d
 ### Pipeline Success — All Stages Green
 ![Pipeline Success](screenshots/01-pipeline-success.png)
 
+### Trivy Security Scan
+![Trivy Scan](screenshots/05-trivy-security-scan.png)
+
 ### Console Output
 ![Console Output](screenshots/02-console-output.png)
 
@@ -611,7 +614,9 @@ mariadb-0                   1/1     Running   0          2d
 ![DockerHub](screenshots/03-dockerhub-images.png)
 
 ### EKS Pods Updated
-![EKS Updated](screenshots/04-eks_pods-updated.png)
+![EKS Updated](screenshots/04-eks-pods-updated.png)
+
+
 
 ---
 
