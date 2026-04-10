@@ -1,6 +1,7 @@
 # 🏗️ CI/CD DevOps Pipelines
 
 > Production-grade Jenkins CI/CD pipeline for StudentSphere application.
+> Automated build → security scan → Docker push → EKS deploy in ~3m 37s.
 > Part of the [multi-cloud-devops-studentsphere](https://github.com/manesaurabh1704-devops/multi-cloud-devops-studentsphere) project.
 
 ---
@@ -17,39 +18,66 @@ ci-cd-devops-pipelines/
 
 ---
 
-## 🔄 Pipeline Architecture
+## 🔄 Why CI/CD?
 
 ```
-GitHub Push
-    ↓
-Jenkins Pipeline (Triggered)
-    ↓
-┌─────────────────────────────────────────┐
-│  Stage 1: Git Checkout                  │
-│  Stage 2: Backend Maven Build           │
-│  Stage 3: Frontend npm Build            │
-│  Stage 4: Trivy Security Scan           │
-│  Stage 5: Docker Build                  │
-│  Stage 6: Docker Push to DockerHub      │
-│  Stage 7: Deploy to AWS EKS             │
-└─────────────────────────────────────────┘
-    ↓
-AWS EKS — Updated Deployment
+Without CI/CD (Manual):
+  Developer → docker build → docker push → kubectl apply
+  Problem:   Slow + error-prone + no security scanning + no audit trail
+
+With Jenkins CI/CD (Automated):
+  Git Push → Jenkins → Build → Scan → Push → Deploy
+  Benefit:   Fast + consistent + secure + auditable + repeatable
 ```
 
 ---
 
-## 📋 Pipeline Stages
+## 🏗️ Pipeline Architecture
 
-| Stage | Tool | Description |
-|---|---|---|
-| Git Checkout | Git | Pull latest code from GitHub |
-| Backend Maven Build | Maven + Java 17 | Build Spring Boot JAR |
-| Frontend npm Build | Node.js 20 | Build React production bundle |
-| Trivy Security Scan | Trivy | Scan for HIGH/CRITICAL vulnerabilities |
-| Docker Build | Docker | Build multi-stage images |
-| Docker Push | DockerHub | Push images with build number tag |
-| Deploy to EKS | kubectl | Rolling update on AWS EKS |
+```
+Developer pushes code to GitHub
+          ↓
+    Jenkins detects push
+          ↓
+┌──────────────────────────────────────┐
+│  Stage 1: Git Checkout               │  ~700ms
+│  Stage 2: Backend Maven Build        │  ~11s
+│  Stage 3: Frontend npm Build         │  ~10s
+│  Stage 4: Trivy Security Scan        │  ~11s
+│  Stage 5: Docker Build               │  ~29s
+│  Stage 6: Docker Push to DockerHub   │  ~11s
+│  Stage 7: Deploy to AWS EKS          │  ~2m 18s
+└──────────────────────────────────────┘
+          ↓
+  AWS EKS — Updated Deployment
+  Total time: ~3m 37s
+```
+
+---
+
+## 📋 Pipeline Stages Explained
+
+| Stage | Tool | What Happens | Why |
+|---|---|---|---|
+| Git Checkout | Git | Pull latest code from GitHub | Always build from latest source |
+| Backend Maven Build | Maven + Java 17 | Compile Spring Boot JAR | Catch compilation errors early |
+| Frontend npm Build | Node.js 20 | Build React production bundle | Validate frontend builds correctly |
+| Trivy Security Scan | Trivy | Scan for HIGH/CRITICAL CVEs | Block vulnerable images from deploying |
+| Docker Build | Docker | Build multi-stage images | Create optimized production images |
+| Docker Push | DockerHub | Push with build number tag | Version tracking + easy rollback |
+| Deploy to EKS | kubectl | Rolling update on AWS EKS | Zero-downtime deployment |
+
+---
+
+## 🏆 Pipeline Stats
+
+```
+Total Build Time:  ~3 minutes 37 seconds
+Pipeline Stages:   7
+Security Scanning: Integrated (Trivy — HIGH/CRITICAL)
+Image Tagging:     Build number based (easy rollback)
+Deployment:        Rolling update (zero downtime)
+```
 
 ---
 
@@ -204,9 +232,7 @@ a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
 sudo apt install -y docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
-```
 
-```bash
 # Verify
 docker --version
 ```
@@ -242,9 +268,7 @@ sudo systemctl restart jenkins
 
 ```bash
 sudo snap install aws-cli --classic
-```
 
-```bash
 # Verify
 aws --version
 ```
@@ -386,9 +410,7 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 
 # Install Node.js
 sudo apt install -y nodejs
-```
 
-```bash
 # Verify
 node --version
 npm --version
@@ -406,9 +428,7 @@ v20.20.2
 
 ```bash
 sudo apt install -y maven
-```
 
-```bash
 # Verify Maven with Java 17
 mvn --version
 ```
@@ -443,9 +463,7 @@ echo "deb https://aquasecurity.github.io/trivy-repo/deb generic main" | \
 # Install Trivy
 sudo apt update
 sudo apt install -y trivy
-```
 
-```bash
 # Verify
 trivy --version
 ```
@@ -529,10 +547,8 @@ After installation:
 ```
 Manage Jenkins → Credentials → System
 → Global credentials (unrestricted) → Add Credentials
-```
 
 DockerHub Credentials:
-```
 Kind:        Username with password
 Scope:       Global
 Username:    your-dockerhub-username
@@ -553,7 +569,7 @@ Type: Pipeline → OK
 Pipeline section:
   Definition:     Pipeline script from SCM
   SCM:            Git
-  Repository URL: https://github.com/your-username/multi-cloud-devops-studentsphere.git
+  Repository URL: https://github.com/manesaurabh1704-devops/multi-cloud-devops-studentsphere.git
   Branch:         */main
   Script Path:    Jenkinsfile
 → Save
@@ -579,7 +595,7 @@ Expected Stage View:
 ✅ Deploy to EKS               — ~2min 18s
 ✅ Declarative: Post Actions   — ~200ms
 
-Total time: ~3min 37sec
+Total time: ~3min 37sec ✅
 ```
 
 ```bash
@@ -604,9 +620,6 @@ mariadb-0                   1/1     Running   0          2d
 ### Pipeline Success — All Stages Green
 ![Pipeline Success](screenshots/01-pipeline-success.png)
 
-### Trivy Security Scan
-![Trivy Scan](screenshots/05-trivy-security-scan.png)
-
 ### Console Output
 ![Console Output](screenshots/02-console-output.png)
 
@@ -616,7 +629,8 @@ mariadb-0                   1/1     Running   0          2d
 ### EKS Pods Updated
 ![EKS Updated](screenshots/04-EKS%20pods%20updated.png)
 
-
+### Trivy Security Scan
+![Trivy Scan](screenshots/05-trivy-security-scan.png)
 
 ---
 
@@ -681,7 +695,7 @@ Error: Jenkins cannot start — port 8080 in use
 
 Fix:
 sudo lsof -i :8080
-# Stop the conflicting service or use different port
+# Stop the conflicting service or use a different port
 ```
 
 ---
